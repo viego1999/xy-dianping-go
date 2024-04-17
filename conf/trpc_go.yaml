@@ -1,0 +1,27 @@
+server:
+  service:  # 业务服务提供的 service，可以有多个
+    - name: trpc.app.server.stdhttp  # service 的路由名称
+      network: tcp  # 网络监听类型，tcp 或 udp
+      protocol: http_no_protocol  # 应用层协议 http_no_protocol
+      timeout: 1000  # 请求最长处理时间，单位毫秒
+      ip: 127.0.0.1
+      port: 8080  # 服务监听端口
+
+client:
+  service:
+    - name: trpc.mysql.xydp # 初始化为mysql
+      target: ip://root:123456@tcp(127.0.0.1:3306)/hmdp?charset=utf8mb4&parseTime=True
+
+plugins: #插件配置
+  database:
+    gorm:
+      # 所有数据库连接默认的连接池配置
+      max_idle: 20 # 最大空闲连接数
+      max_open: 100 # 最大在线连接数
+      max_lifetime: 180000 # 连接最大生命周期(单位：毫秒)
+      # 指定数据库连接单独配置连接池
+      service:
+        - name: trpc.mysql.xydp
+          max_idle: 10 # 最大空闲连接数
+          max_open: 50 # 最大在线连接数
+          max_lifetime: 180000 # 连接最大生命周期(单位：毫秒)
