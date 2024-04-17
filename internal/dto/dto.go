@@ -1,5 +1,7 @@
 package dto
 
+import "encoding/gob"
+
 type LoginFormDTO struct {
 	Phone    string `json:"phone"`
 	Code     string `json:"code"`
@@ -30,4 +32,9 @@ type UserDTO struct {
 	Id       int64  `json:"id"`
 	NickName string `json:"nickName"`
 	Icon     string `json:"icon"`
+}
+
+func init() {
+	// 注册类型以便在使用 securecookie 时可以正确编码和解码
+	gob.Register(&UserDTO{})
 }

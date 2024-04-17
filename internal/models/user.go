@@ -3,7 +3,7 @@ package models
 import "time"
 
 type User struct {
-	Id         int64     `json:"id" grom:"id"`
+	Id         int64     `json:"id" grom:"primaryKey;autoIncrement"`
 	Phone      string    `json:"phone" grom:"phone"`
 	Password   string    `json:"password" grom:"password"`
 	NickName   string    `json:"nickName" grom:"nick_name"`

@@ -39,7 +39,7 @@ func (s *UserServiceImpl) SendCode(phone string, session *sessions.Session) *dto
 	// 符合，生成验证码
 	code := util.RandomNumbers(6)
 	// 保存到验证码 session
-	session.Values["code"] = code
+	session.Values[phone+":code"] = code
 	// 发送验证码
 	log.Debugf("发送验证码成功，验证码：{%s}", code)
 	// 返回结果
@@ -54,7 +54,7 @@ func (s *UserServiceImpl) Login(loginForm dto.LoginFormDTO, session *sessions.Se
 	}
 
 	// 校验验证码
-	if cacheCode, ok := session.Values["code"]; !ok || cacheCode != loginForm.Code {
+	if cacheCode, ok := session.Values[phone+":code"]; !ok || cacheCode != loginForm.Code {
 		// 不一致，报错
 		log.Debugf("验证码不一致，cacheCode:{%s}, code:{%s}。", cacheCode, loginForm.Code)
 		return common.Fail("验证码不一致")
@@ -73,6 +73,13 @@ func (s *UserServiceImpl) Login(loginForm dto.LoginFormDTO, session *sessions.Se
 		_ = s.userRepo.CreateUser(user)
 	}
 	// 保存信息到 session 中
+	session.Values["user"] = &dto.UserDTO{
+		Id:       user.Id,
+		NickName: user.NickName,
+		Icon:     user.Icon,
+	}
+
+	// 生成 token
 	uid, _ := uuid.NewRandom()
 	token := uid.String()
 	return common.OkWithData(token)

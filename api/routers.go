@@ -22,6 +22,8 @@ func Router(userController *v1.UserController, blogController *v1.BlogController
 	router.Use(middleware.RecoverMiddleware)
 	// Session 中间件
 	router.Use(middleware.SessionMiddleware)
+	// 登录中间件
+	router.Use(middleware.AuthenticateMiddleware)
 
 	// 注册路由
 	router.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
@@ -35,6 +37,7 @@ func Router(userController *v1.UserController, blogController *v1.BlogController
 	userRouter := router.PathPrefix("/user").Subrouter()
 	userRouter.HandleFunc("/code", userController.SendCode).Methods("POST")
 	userRouter.HandleFunc("/login", userController.Login).Methods("POST")
+	userRouter.HandleFunc("/sign", userController.Sign).Methods("POST")
 
 	// 注册 blog 子路由器
 	blogRouter := router.PathPrefix("/blog").Subrouter()

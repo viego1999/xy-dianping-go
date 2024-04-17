@@ -3,7 +3,7 @@ package models
 import "time"
 
 type Blog struct {
-	Id         int64     `json:"id" grom:"column:id"`
+	Id         int64     `json:"id" grom:"column:id;primaryKey;autoIncrement"`
 	ShopId     int64     `json:"shopId" grom:"column:shop_id"`
 	UserId     int64     `json:"userId" grom:"column:user_id"`
 	Icon       string    `json:"icon" grom:"-"`

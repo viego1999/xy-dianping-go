@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gorilla/sessions"
 	"net/http"
+	"trpc.group/trpc-go/trpc-go/log"
 	"xy-dianping-go/internal/common"
 	"xy-dianping-go/internal/dto"
 	"xy-dianping-go/internal/service"
@@ -33,10 +34,8 @@ func (c *UserController) SendCode(w http.ResponseWriter, r *http.Request) {
 
 	result := c.userService.SendCode(phone, session)
 	// 保存 session 设置的值
-	if err := session.Save(r, w); err != nil {
-		common.SendResponseWithCode(w, common.Fail("Session数据设置失败:"+err.Error()), http.StatusInternalServerError)
-		return
-	}
+	common.SessionSave(session, r, w)
+	// 发送响应
 	common.SendResponse(w, result)
 }
 
@@ -53,5 +52,24 @@ func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 	session := r.Context().Value("session").(*sessions.Session)
 
 	// 一致，根据手机号码查询用户
-	common.SendResponse(w, c.userService.Login(loginForm, session))
+	result := c.userService.Login(loginForm, session)
+	// 保存 session 的值
+	common.SessionSave(session, r, w)
+	// 发送响应
+	common.SendResponse(w, result)
+}
+
+func (c *UserController) Sign(w http.ResponseWriter, r *http.Request) {
+	// 获取当前登录用户
+	userDTO, ok := common.GetUserFromContext(r.Context())
+	if !ok {
+		common.SendResponse(w, common.Fail("获取当前用户失败"))
+		return
+	}
+	// 获取日期
+	log.Infof("userDTO: %v, ok: %t.", userDTO, ok)
+	// 进行签到
+
+	// 回复结果
+	common.SendResponse(w, common.Ok())
 }
