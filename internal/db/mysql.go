@@ -1,4 +1,4 @@
-package repo
+package db
 
 import (
 	"gorm.io/gorm"
@@ -16,6 +16,6 @@ func InitDatabase() (Db *gorm.DB) {
 	if Db == nil {
 		log.Error(map[string]interface{}{"database error": Db.Error})
 	}
-	log.Info("Db initialization completed.")
+	log.Info("Database initialization completed.")
 	return
 }

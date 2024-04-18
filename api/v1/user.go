@@ -2,20 +2,22 @@ package v1
 
 import (
 	"encoding/json"
-	"github.com/gorilla/sessions"
+	"github.com/gorilla/mux"
+	"github.com/jinzhu/copier"
 	"net/http"
-	"trpc.group/trpc-go/trpc-go/log"
+	"strconv"
 	"xy-dianping-go/internal/common"
 	"xy-dianping-go/internal/dto"
 	"xy-dianping-go/internal/service"
 )
 
 type UserController struct {
-	userService service.UserService
+	userService     service.UserService
+	userInfoService service.UserInfoService
 }
 
-func NewUserController(userService service.UserService) *UserController {
-	return &UserController{userService}
+func NewUserController(userService service.UserService, userInfoService service.UserInfoService) *UserController {
+	return &UserController{userService, userInfoService}
 }
 
 func (c *UserController) SendCode(w http.ResponseWriter, r *http.Request) {
@@ -29,12 +31,16 @@ func (c *UserController) SendCode(w http.ResponseWriter, r *http.Request) {
 	// 获取表单值
 	phone := r.FormValue("phone")
 
-	// 获取 session
-	session := r.Context().Value("session").(*sessions.Session)
+	// ======= 将验证码存储到 http.session 中 ======
+	//// 获取 session
+	//session := r.Context().Value("session").(*sessions.Session)
+	//result := c.userService.SendCodeWithSession(phone, session)
+	//// 保存 session 设置的值
+	//common.SessionSave(session, r, w)
+	// ===========    END Send Code   ============
 
-	result := c.userService.SendCode(phone, session)
-	// 保存 session 设置的值
-	common.SessionSave(session, r, w)
+	result := c.userService.SendCode(r.Context(), phone)
+
 	// 发送响应
 	common.SendResponse(w, result)
 }
@@ -48,28 +54,74 @@ func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 获取 session
-	session := r.Context().Value("session").(*sessions.Session)
+	// =========== 基于 http.session 进行登录验证 ==========
+	//// 获取 session
+	//session := r.Context().Value("session").(*sessions.Session)
+	//
+	//// 一致，根据手机号码查询用户
+	//result := c.userService.LoginWithSession(loginForm, session)
+	//// 保存 session 的值
+	//common.SessionSave(session, r, w)
+	// ==========  END LOGIN WiTH SESSION ==============
 
-	// 一致，根据手机号码查询用户
-	result := c.userService.Login(loginForm, session)
-	// 保存 session 的值
-	common.SessionSave(session, r, w)
+	result := c.userService.Login(r.Context(), &loginForm)
+
 	// 发送响应
 	common.SendResponse(w, result)
 }
 
-func (c *UserController) Sign(w http.ResponseWriter, r *http.Request) {
-	// 获取当前登录用户
-	userDTO, ok := common.GetUserFromContext(r.Context())
-	if !ok {
-		common.SendResponse(w, common.Fail("获取当前用户失败"))
+func (c *UserController) Me(w http.ResponseWriter, r *http.Request) {
+
+	common.SendResponse(w, c.userService.Me(r.Context()))
+}
+
+func (c *UserController) Info(w http.ResponseWriter, r *http.Request) {
+	// 获取用户id
+	vars := mux.Vars(r)
+	userIdStr := vars["id"]
+	userId, err := strconv.Atoi(userIdStr)
+	if err != nil {
+		common.SendResponse(w, common.FailWithCode("Invalid user id", http.StatusBadRequest))
 		return
 	}
-	// 获取日期
-	log.Infof("userDTO: %v, ok: %t.", userDTO, ok)
-	// 进行签到
+	userInfo, err := c.userInfoService.GetUserInfoByUserId(int64(userId))
+	if userInfo == nil {
+		// 没有详情，应该是第一次查看详情
+		common.SendResponse(w, common.Ok())
+		return
+	}
+	// 返回
+	common.SendResponse(w, common.OkWithData(userInfo))
+}
 
-	// 回复结果
-	common.SendResponse(w, common.Ok())
+func (c *UserController) QueryUserById(w http.ResponseWriter, r *http.Request) {
+	// 获取用户id
+	vars := mux.Vars(r)
+	userIdStr := vars["id"]
+	id, err := strconv.Atoi(userIdStr)
+	if err != nil {
+		common.SendResponse(w, common.FailWithCode("Invalid user id", http.StatusBadRequest))
+		return
+	}
+	// 查询详情
+	user, _ := c.userService.GetUserById(int64(id))
+	if user == nil {
+		common.SendResponse(w, common.Ok())
+		return
+	}
+
+	userDTO := dto.UserDTO{}
+	_ = copier.Copy(&userDTO, user) // 值填充
+
+	common.SendResponse(w, common.OkWithData(userDTO))
+}
+
+func (c *UserController) Sign(w http.ResponseWriter, r *http.Request) {
+
+	common.SendResponse(w, c.userService.Sign(r.Context()))
+}
+
+func (c *UserController) SignCount(w http.ResponseWriter, r *http.Request) {
+
+	common.SendResponse(w, c.userService.SignCount(r.Context()))
 }

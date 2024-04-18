@@ -20,6 +20,34 @@ var (
 	}
 )
 
+func LoginMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 1.遍历不需要登录的请求列表
+		for _, p := range excludePathPatterns {
+			isMatch := p.MatchString(r.URL.Path)
+			if isMatch { // 匹配
+				// 直接放行
+				next.ServeHTTP(w, r)
+				return
+			}
+		}
+
+		// 2. 判断是否需要拦截（ThreadLocal中是否有用户）
+		userDTO, ok := common.GetUserFromContext(r.Context())
+		if userDTO == nil || !ok {
+			// 没有，需要拦截，设置状态码
+			common.SendResponseWithCode(w, common.Fail("未登录"), 401)
+			// 拦截
+			return
+		}
+		// 有用户则放行
+		next.ServeHTTP(w, r)
+	})
+}
+
+// AuthenticateMiddleware 基于 http.Session 的登录认证中间件
+//
+// Deprecated: 使用基于 redis 的 认证中间件 LoginMiddleware
 func AuthenticateMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 遍历不需要登录的请求列表

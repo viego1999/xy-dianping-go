@@ -15,6 +15,8 @@ var (
 )
 
 // SessionMiddleware 是一个中间件，用于将 session 存储添加到请求上下文中
+//
+// Deprecated: 使用基于 redis 的 session 功能
 func SessionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := Store.Get(r, SessionName)

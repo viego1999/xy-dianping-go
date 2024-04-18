@@ -10,12 +10,12 @@ type BlogService interface {
 }
 
 type BlogServiceImpl struct {
-	blogRepo    repo.BlogRepository
-	userService UserService
+	userRepo repo.UserRepository
+	blogRepo repo.BlogRepository
 }
 
-func NewBlogService(blogRepo repo.BlogRepository, userService UserService) BlogService {
-	return &BlogServiceImpl{blogRepo: blogRepo, userService: userService}
+func NewBlogService(userRepo repo.UserRepository, blogRepo repo.BlogRepository) BlogService {
+	return &BlogServiceImpl{userRepo, blogRepo}
 }
 
 func (s *BlogServiceImpl) QueryBlogById(id int64) (*models.Blog, error) {
@@ -26,7 +26,7 @@ func (s *BlogServiceImpl) QueryBlogById(id int64) (*models.Blog, error) {
 	}
 	// 2.查询 blog 有关的用户
 	userId := blog.UserId
-	user, err := s.userService.GetUserById(userId)
+	user, err := s.userRepo.QueryById(userId)
 	blog.Name = user.NickName
 	blog.Icon = user.Icon
 	// 3.查询 bog 是否被点赞

@@ -11,6 +11,7 @@ import (
 	"xy-dianping-go/api"
 	v1 "xy-dianping-go/api/v1"
 	"xy-dianping-go/internal/config"
+	"xy-dianping-go/internal/db"
 	"xy-dianping-go/internal/repo"
 	"xy-dianping-go/internal/service"
 )
@@ -25,11 +26,11 @@ func main() {
 		fx.Provide(trpc.NewServer),
 		// 提供 *gorm.DB 实例
 		// 初始化数据库连接
-		fx.Provide(repo.InitDatabase),
+		fx.Provide(db.InitDatabase, db.InitRedisClient),
 		// 提供 Repository 的实例，依赖于 *gorm.DB
-		fx.Provide(repo.NewUserRepository, repo.NewBlogRepository),
+		fx.Provide(repo.NewUserRepository, repo.NewUserInfoRepository, repo.NewBlogRepository),
 		// 提供 Service 的实例，依赖于 Repository
-		fx.Provide(service.NewUserService, service.NewBlogService),
+		fx.Provide(service.NewUserService, service.NewUserInfoService, service.NewBlogService),
 		// 提供 Controller 的实例，依赖于 Service
 		fx.Provide(v1.NewUserController, v1.NewBlogController),
 		// 导入路由模块

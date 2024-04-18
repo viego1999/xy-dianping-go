@@ -29,9 +29,9 @@ type SeckillOrderDTO struct {
 }
 
 type UserDTO struct {
-	Id       int64  `json:"id"`
-	NickName string `json:"nickName"`
-	Icon     string `json:"icon"`
+	Id       int64  `json:"id" mapstructure:"id"`
+	NickName string `json:"nickName" mapstructure:"nickName"`
+	Icon     string `json:"icon" mapstructure:"icon"`
 }
 
 func init() {

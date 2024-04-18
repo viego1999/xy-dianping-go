@@ -1,6 +1,7 @@
 package config
 
 var (
-	DbServiceName   = "trpc.mysql.xydp"
-	HttpServiceName = "trpc.app.server.stdhttp"
+	DbServiceName    = "trpc.xydp.mysql"
+	HttpServiceName  = "trpc.app.server.stdhttp"
+	RedisServiceName = "trpc.xydp.redis"
 )
