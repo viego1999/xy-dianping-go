@@ -3,7 +3,6 @@ package v1
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
-	"github.com/jinzhu/copier"
 	"net/http"
 	"strconv"
 	"xy-dianping-go/internal/common"
@@ -103,17 +102,8 @@ func (c *UserController) QueryUserById(w http.ResponseWriter, r *http.Request) {
 		common.SendResponse(w, common.FailWithCode("Invalid user id", http.StatusBadRequest))
 		return
 	}
-	// 查询详情
-	user, _ := c.userService.GetUserById(int64(id))
-	if user == nil {
-		common.SendResponse(w, common.Ok())
-		return
-	}
 
-	userDTO := dto.UserDTO{}
-	_ = copier.Copy(&userDTO, user) // 值填充
-
-	common.SendResponse(w, common.OkWithData(userDTO))
+	common.SendResponse(w, c.userService.GetUserById(int64(id)))
 }
 
 func (c *UserController) Sign(w http.ResponseWriter, r *http.Request) {

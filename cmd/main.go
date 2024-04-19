@@ -28,11 +28,11 @@ func main() {
 		// 初始化数据库连接
 		fx.Provide(db.InitDatabase, db.InitRedisClient),
 		// 提供 Repository 的实例，依赖于 *gorm.DB
-		fx.Provide(repo.NewUserRepository, repo.NewUserInfoRepository, repo.NewBlogRepository),
+		fx.Provide(repo.NewUserRepository, repo.NewUserInfoRepository, repo.NewShopRepository, repo.NewBlogRepository),
 		// 提供 Service 的实例，依赖于 Repository
-		fx.Provide(service.NewUserService, service.NewUserInfoService, service.NewBlogService),
+		fx.Provide(service.NewUserService, service.NewUserInfoService, service.NewShopService, service.NewBlogService),
 		// 提供 Controller 的实例，依赖于 Service
-		fx.Provide(v1.NewUserController, v1.NewBlogController),
+		fx.Provide(v1.NewUserController, v1.NewShopController, v1.NewBlogController),
 		// 导入路由模块
 		api.Module,
 

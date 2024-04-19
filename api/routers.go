@@ -14,12 +14,12 @@ var (
 )
 
 // Router 路由统一管理，返回 *mux.Router
-func Router(userController *v1.UserController, blogController *v1.BlogController) *mux.Router {
+func Router(userController *v1.UserController, shopController *v1.ShopController, blogController *v1.BlogController) *mux.Router {
 	// 路由注册
 	router := mux.NewRouter()
 
 	// 全局中间件
-	//router.Use(middleware.RecoverMiddleware)
+	router.Use(middleware.RecoverMiddleware)
 	// Session 中间件
 	router.Use(middleware.RefreshTokenMiddleware)
 	// 登录中间件
@@ -42,6 +42,10 @@ func Router(userController *v1.UserController, blogController *v1.BlogController
 	userRouter.HandleFunc("/{id}", userController.QueryUserById).Methods("GET")
 	userRouter.HandleFunc("/sign", userController.Sign).Methods("POST")
 	userRouter.HandleFunc("/sign/count", userController.SignCount).Methods("GET")
+
+	// 注册 shop 子路由器
+	shopRouter := router.PathPrefix("/shop").Subrouter()
+	shopRouter.HandleFunc("/{id}", shopController.QueryShopById).Methods("GET")
 
 	// 注册 blog 子路由器
 	blogRouter := router.PathPrefix("/blog").Subrouter()

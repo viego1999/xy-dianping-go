@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
+	"github.com/jinzhu/copier"
 	"github.com/redis/go-redis/v9"
 	"strconv"
 	"time"
@@ -18,7 +19,7 @@ import (
 )
 
 type UserService interface {
-	GetUserById(id int64) (*models.User, error)
+	GetUserById(id int64) *dto.Result
 	SendCode(ctx context.Context, phone string) *dto.Result
 	Login(ctx context.Context, loginForm *dto.LoginFormDTO) *dto.Result
 	Me(ctx context.Context) *dto.Result
@@ -35,8 +36,17 @@ func NewUserService(redisClient redis.UniversalClient, userRepo repo.UserReposit
 	return &UserServiceImpl{redisClient: redisClient, userRepo: userRepo}
 }
 
-func (s *UserServiceImpl) GetUserById(id int64) (*models.User, error) {
-	return s.userRepo.QueryById(id)
+func (s *UserServiceImpl) GetUserById(id int64) *dto.Result {
+	// 查询详情
+	user, _ := s.userRepo.QueryById(id)
+	if user == nil {
+		return common.Ok()
+	}
+
+	userDTO := dto.UserDTO{}
+	_ = copier.Copy(&userDTO, user) // 值填充
+
+	return common.OkWithData(userDTO)
 }
 
 func (s *UserServiceImpl) SendCode(ctx context.Context, phone string) *dto.Result {
