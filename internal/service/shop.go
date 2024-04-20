@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"strconv"
@@ -17,6 +18,8 @@ import (
 
 type ShopService interface {
 	QueryShopById(ctx context.Context, id int64) *dto.Result
+	SaveShop(shop *models.Shop) *dto.Result
+	UpdateShop(ctx context.Context, shop *models.Shop) *dto.Result
 }
 
 type ShopServiceImpl struct {
@@ -86,4 +89,41 @@ func (s *ShopServiceImpl) QueryShopById(ctx context.Context, id int64) *dto.Resu
 	s.redisClient.Set(ctx, key, string(shopBytes), constants.CACHE_SHOP_TTL*time.Minute)
 	// 返回结果
 	return common.OkWithData(shop)
+}
+
+func (s *ShopServiceImpl) SaveShop(shop *models.Shop) *dto.Result {
+	err := s.shopRepo.CreateShop(shop)
+	if err != nil {
+		panic(fmt.Sprintf("SaveShop - save shop error: %v", err))
+	}
+	return common.OkWithData(shop.Id)
+}
+
+func (s *ShopServiceImpl) UpdateShop(ctx context.Context, shop *models.Shop) *dto.Result {
+	// 获取 id
+	id := shop.Id
+	if id == 0 {
+		return common.Fail("店铺id不能为空！")
+	}
+	// 使用事务进行数据库操作，当缓存删除发生异常时方便回滚
+	// 开始事务，返回错误进行回滚，否则提交事务
+	err := s.shopRepo.ExecuteTransaction(func(repo repo.ShopRepository) error {
+		// 1.更新数据库
+		err := repo.Update(shop)
+		if err != nil {
+			return errors.New(fmt.Sprintf("UpdateShop - update shop by map error: %+v.", err))
+		}
+		// 2.删除缓存（当删除失败可能导致缓存中为旧数据）
+		key := constants.CACHE_SHOP_KEY + strconv.Itoa(int(id))
+		_, err = s.redisClient.Del(ctx, key).Result()
+		if err != nil {
+			return errors.New(fmt.Sprintf("UpdateShop - Redis delete error: %+v.", err))
+		}
+		// 如果没有错误，返回 nil 以提交事务
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+	return common.Ok()
 }

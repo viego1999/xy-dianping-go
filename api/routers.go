@@ -46,6 +46,8 @@ func Router(userController *v1.UserController, shopController *v1.ShopController
 	// 注册 shop 子路由器
 	shopRouter := router.PathPrefix("/shop").Subrouter()
 	shopRouter.HandleFunc("/{id}", shopController.QueryShopById).Methods("GET")
+	shopRouter.HandleFunc("", shopController.SaveShop).Methods("POST")
+	shopRouter.HandleFunc("", shopController.UpdateShop).Methods("PUT")
 
 	// 注册 blog 子路由器
 	blogRouter := router.PathPrefix("/blog").Subrouter()

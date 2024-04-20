@@ -10,9 +10,9 @@ import (
 
 var (
 	excludePathPatterns = []*regexp.Regexp{
-		regexp.MustCompile("^/shop/.*"),
-		regexp.MustCompile("^/voucher/.*"),
-		regexp.MustCompile("^/shop-type/.*"),
+		regexp.MustCompile("^/shop/?.*"),
+		regexp.MustCompile("^/voucher/?.*"),
+		regexp.MustCompile("^/shop-type/?.*"),
 		regexp.MustCompile("^/upload/.*"),
 		regexp.MustCompile("^/blog/hot/?$"),
 		regexp.MustCompile("^/user/code/?$"),

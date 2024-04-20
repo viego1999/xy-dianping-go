@@ -1,10 +1,12 @@
 package v1
 
 import (
+	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
 	"xy-dianping-go/internal/common"
+	"xy-dianping-go/internal/models"
 	"xy-dianping-go/internal/service"
 )
 
@@ -27,4 +29,32 @@ func (c *ShopController) QueryShopById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	common.SendResponse(w, c.shopService.QueryShopById(r.Context(), int64(id)))
+}
+
+func (c *ShopController) SaveShop(w http.ResponseWriter, r *http.Request) {
+	var shop models.Shop
+	// 获取前端店铺信息
+	err := json.NewDecoder(r.Body).Decode(&shop)
+	if err != nil {
+		common.SendResponseWithCode(w, common.Fail("Bad request"), http.StatusBadRequest)
+		return
+	}
+
+	// 写入数据库
+	common.SendResponse(w, c.shopService.SaveShop(&shop))
+}
+
+func (c *ShopController) UpdateShop(w http.ResponseWriter, r *http.Request) {
+	// Note：这里使用 map 来接受参数，由于 models.Shop 类型对于未赋值（为空）的字段设置默认值
+	// 而 gorm 在对 model 更新时会忽略字段默认值的更新，而忽略对于字段赋值为 "", 0 等的默认值
+	var shop models.Shop
+	// 获取前端店铺信息
+	err := json.NewDecoder(r.Body).Decode(&shop)
+	if err != nil {
+		common.SendResponseWithCode(w, common.Fail("Bad request"), http.StatusBadRequest)
+		return
+	}
+
+	// 写入数据库
+	common.SendResponse(w, c.shopService.UpdateShop(r.Context(), &shop))
 }
