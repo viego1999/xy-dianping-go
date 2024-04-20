@@ -24,3 +24,14 @@ func KeysValues[K comparable, V any](m map[K]V) ([]K, []V) {
 	}
 	return keys, values
 }
+
+// GroupBy 接受一个切片和一个分类函数，返回一个映射
+// 其中 K 是键的类型，T 是切片中元素的类型
+func GroupBy[T any, K comparable](slice []T, keyFunc func(T) K) map[K][]T {
+	grouped := make(map[K][]T)
+	for _, item := range slice {
+		key := keyFunc(item)
+		grouped[key] = append(grouped[key], item)
+	}
+	return grouped
+}

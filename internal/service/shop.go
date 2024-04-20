@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"strconv"
+	"strings"
 	"time"
 	"trpc.group/trpc-go/trpc-database/goredis/redlock"
 	"xy-dianping-go/internal/common"
@@ -20,6 +21,8 @@ type ShopService interface {
 	QueryShopById(ctx context.Context, id int64) *dto.Result
 	SaveShop(shop *models.Shop) *dto.Result
 	UpdateShop(ctx context.Context, shop *models.Shop) *dto.Result
+	QueryShopByType(ctx context.Context, typeId int64, current int, x, y float64) *dto.Result
+	QueryShopByName(name string, current int) *dto.Result
 }
 
 type ShopServiceImpl struct {
@@ -107,9 +110,9 @@ func (s *ShopServiceImpl) UpdateShop(ctx context.Context, shop *models.Shop) *dt
 	}
 	// 使用事务进行数据库操作，当缓存删除发生异常时方便回滚
 	// 开始事务，返回错误进行回滚，否则提交事务
-	err := s.shopRepo.ExecuteTransaction(func(repo repo.ShopRepository) error {
+	err := s.shopRepo.ExecuteTransaction(func(txRepo repo.ShopRepository) error {
 		// 1.更新数据库
-		err := repo.Update(shop)
+		err := txRepo.Update(shop)
 		if err != nil {
 			return errors.New(fmt.Sprintf("UpdateShop - update shop by map error: %+v.", err))
 		}
@@ -126,4 +129,84 @@ func (s *ShopServiceImpl) UpdateShop(ctx context.Context, shop *models.Shop) *dt
 		panic(err)
 	}
 	return common.Ok()
+}
+
+func (s *ShopServiceImpl) QueryShopByType(ctx context.Context, typeId int64, current int, x, y float64) *dto.Result {
+	// 1.判断是否需要根据坐标查询
+	if x < 0 || y < 0 {
+		// 不需要坐标查询，按照数据库查询，根据店铺类型分页查询
+		shops, _ := s.shopRepo.QueryByTypeId(typeId, current)
+		// 返回数据
+		return common.OkWithData(shops)
+	}
+	// 2.按照分页参数
+	from := (current - 1) * constants.DEFAULT_PAGE_SIZE
+	end := current * constants.DEFAULT_PAGE_SIZE
+
+	// 3.查询 redis，按照距离排序，分页，结果：shopId、distance
+	key := constants.SHOP_GEO_KEY + strconv.FormatInt(typeId, 10)
+	// 按距离执行 geo 操作
+	res, err := s.redisClient.GeoRadius(ctx, key, x, y, &redis.GeoRadiusQuery{ // 以 x,y 为圆心，Radius 为半径进行查找
+		Radius:    50000,
+		Unit:      "m", // 单位：m
+		WithCoord: false,
+		WithDist:  true,
+		Count:     end,
+		Sort:      "ASC",
+	}).Result()
+	if err != nil {
+		panic(err)
+	}
+
+	// 检查是否有足够的结果满足分页要求
+	if len(res) < from {
+		return common.Ok()
+	}
+
+	// 4.截取所需分页结果
+	res = res[from:]
+	// 解析 id 和距离
+	ids, idStrs := make([]int64, 0, len(res)), make([]string, 0, len(res))
+	distanceMap := make(map[string]float64, len(res))
+	for _, location := range res {
+		idStrs = append(idStrs, location.Name)
+		// 获取店铺 id
+		id, err := strconv.ParseInt(location.Name, 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		ids = append(ids, id)
+		// 获取距离
+		distanceMap[location.Name] = location.Dist
+	}
+
+	if len(ids) == 0 {
+		return common.OkWithData("当前50000m范围内无对应店铺！")
+	}
+
+	// 5.查询数据库
+	// 构建 ORDER BY FIELD 的 SQL 语句
+	orderClause := fmt.Sprintf("FIELD(id, %s)", strings.Join(idStrs, ","))
+	shops, err := s.shopRepo.QueryByIds(ids, orderClause)
+	if err != nil {
+		panic(err)
+	}
+	// 6.更新对象的 Distance 字段
+	for i, shop := range shops {
+		if dist, ok := distanceMap[fmt.Sprintf("%d", shop.Id)]; ok {
+			shops[i].Distance = dist
+		}
+	}
+	// 7.返回
+	return common.OkWithData(shops)
+}
+
+func (s *ShopServiceImpl) QueryShopByName(name string, current int) *dto.Result {
+	// 查询数据库
+	shops, err := s.shopRepo.QueryByName(name, current)
+	if err != nil {
+		panic(err)
+	}
+	// 返回数据
+	return common.OkWithData(shops)
 }

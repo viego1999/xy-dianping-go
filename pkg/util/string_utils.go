@@ -2,6 +2,7 @@ package util
 
 import (
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -31,4 +32,37 @@ func randomStringWithBaseString(baseString string, length int) string {
 
 	// 将字节切片转换为字符串
 	return string(b)
+}
+
+func AtoiOrDefault(s string, defaultVal int) int {
+	if s == "" {
+		return defaultVal
+	}
+	val, err := strconv.Atoi(s)
+	if err != nil {
+		panic(err)
+	}
+	return val
+}
+
+func ParseInt64OrDefault(s string, defaultVal int64) int64 {
+	if s == "" {
+		return defaultVal
+	}
+	val, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return val
+}
+
+func ParseFloatOrDefault(s string, defaultVal float64) float64 {
+	if s == "" {
+		return defaultVal
+	}
+	val, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		panic(err)
+	}
+	return val
 }

@@ -18,6 +18,7 @@ type Shop struct {
 	OpenHours  string    `json:"openHours" gorm:"column:open_hours"`
 	CreateTime time.Time `json:"createTime" gorm:"column:create_time;autoCreateTime"` // 注意这里使用了column标签指定字段名
 	UpdateTime time.Time `json:"updateTime" gorm:"column:update_time;autoUpdateTime"` // 注意这里使用了column标签指定字段名
+	Distance   float64   `json:"distance" gorm:"-"`
 }
 
 func (Shop) TableName() string {
