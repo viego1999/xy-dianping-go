@@ -658,8 +658,6 @@ public Result queryShopById(@PathVariable("id") Long id) {
 
 ![1653322190155](.\imgs\1653322190155.png)
 
-
-
 ### 2.3 缓存更新策略
 
 缓存更新是redis为了节约内存而设计出来的一个东西，主要是因为内存数据宝贵，当我们向redis插入太多数据，此时就可能会导致缓存中的数据过多，所以redis会对部分数据进行更新，或者把他叫为淘汰更合适。
@@ -1214,6 +1212,72 @@ private CacheClient cacheClient;
         // 7.返回
         return Result.ok(shop);
     }
+```
+
+----
+
+- go代码实现如下
+
+```go
+// QueryShopById 获取店铺信息，基于 redis 的分布式锁解决缓存穿透
+func (s *ShopServiceImpl) QueryShopById(ctx context.Context, id int64) *dto.Result {
+	var shop = &models.Shop{}
+	idStr := strconv.Itoa(int(id))
+	// 1.从 redis 缓存中查询商铺
+	key := constants.CACHE_SHOP_KEY + idStr
+	shopJson, err := s.redisClient.Get(ctx, key).Result()
+	// 2.判断是否存在
+	if err != redis.Nil { // redis 中存在记录
+		if err != nil { // redis 操作出现其他错误
+			panic(fmt.Sprintf("QueryShopById - Redis Get error: %v", err))
+		}
+		// 3.存在，直接返回
+		// 判断是否为 null，缓存的空值
+		if shopJson == "null" {
+			return common.Fail("店铺不存在！")
+		}
+		// 解码 json 为 shop
+		if err = json.Unmarshal([]byte(shopJson), shop); err != nil {
+			panic(fmt.Sprintf("QueryShopById - JSON Unmarshal error: %v", err))
+		} else {
+			return common.OkWithData(shop)
+		}
+	}
+	// 4.实现缓存重建
+	// 4.1 获取互斥锁
+	lockKey := constants.LOCK_SHOP_KEY + idStr
+	// 创建分布式锁
+	redLock, err := redlock.New(s.redisClient)
+	mu, err := redLock.TryLock(ctx, lockKey)
+	// 4.2 判断锁是否获取成功
+	if err != nil {
+		// 4.3 失败，则休眠并重试
+		time.Sleep(50 * time.Millisecond)
+		return s.QueryShopById(ctx, id)
+	}
+
+	// 加锁成功后，最后需要释放锁
+	defer func(mu redlock.Mutex, ctx context.Context) {
+		if err := mu.Unlock(ctx); err != nil {
+			panic(fmt.Sprintf("QeuryShopById - lock fail %v", err))
+		}
+	}(mu, ctx)
+
+	// 4.4 加锁成功，根据 id 查询数据库
+	shop, _ = s.shopRepo.QueryById(id)
+	// 5.不存在，返回错误
+	if shop == nil {
+		// 【缓存穿透】将空值写入 redis
+		s.redisClient.Set(ctx, key, "null", constants.CACHE_NULL_TTL*time.Minute)
+		// 返回错误信息
+		return common.Fail("店铺不存在！")
+	}
+	// 6.存在，写入 redis
+	shopBytes, _ := json.Marshal(shop)
+	s.redisClient.Set(ctx, key, string(shopBytes), constants.CACHE_SHOP_TTL*time.Minute)
+	// 返回结果
+	return common.OkWithData(shop)
+}
 ```
 
 ## 3、优惠卷秒杀

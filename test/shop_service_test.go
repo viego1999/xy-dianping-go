@@ -78,3 +78,9 @@ func TestLoadShopData(t *testing.T) {
 		}
 	}
 }
+
+func TestQueryShopById(t *testing.T) {
+	log.Info("test QueryShopById()")
+	result := shopService.QueryShopById(ctx, 1)
+	t.Logf("result: %+v", result)
+}
