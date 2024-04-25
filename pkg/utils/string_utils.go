@@ -1,9 +1,13 @@
-package util
+package utils
 
 import (
+	"context"
+	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
+	"xy-dianping-go/internal/constants"
+	"xy-dianping-go/internal/db"
 )
 
 func RandomNumbers(length int) string {
@@ -65,4 +69,22 @@ func ParseFloatOrDefault(s string, defaultVal float64) float64 {
 		panic(err)
 	}
 	return val
+}
+
+func NextId(ctx context.Context, keyPrefix string) int64 {
+	// 1.生成时间戳
+	now := time.Now().UTC()
+	nowSecond := now.Unix()
+	timestamp := nowSecond - constants.START_TIMESTAMP
+
+	// 2.生成序列号
+	date := now.Format("2006:01:02")
+	// 2.2 自增长
+	count, err := db.RedisClient.Incr(ctx, fmt.Sprintf("icr:%s:%s", keyPrefix, date)).Result()
+	if err != nil {
+		panic(err)
+	}
+
+	// 3.拼接并返回
+	return int64((uint64(timestamp) << constants.COUNT_BITS) | uint64(count))
 }

@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
 )
@@ -20,4 +21,12 @@ func TestTimezone(t *testing.T) {
 	loca, _ := time.LoadLocation("Asia/Shanghai")
 	ti, _ = time.ParseInLocation(layout, str, loca)
 	fmt.Println("Parse time with loca:", ti) // 2024-04-22 20:59:44 +0800 CST
+}
+
+func TestReadFile(t *testing.T) {
+	file, err := os.ReadFile("../script/lua/seckill.lua")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(file))
 }

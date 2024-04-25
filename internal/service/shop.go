@@ -63,7 +63,7 @@ func (s *ShopServiceImpl) QueryShopById(ctx context.Context, id int64) *dto.Resu
 	lockKey := constants.LOCK_SHOP_KEY + idStr
 	// 创建分布式锁
 	redLock, err := redlock.New(s.redisClient)
-	mu, err := redLock.TryLock(ctx, lockKey)
+	mu, err := redLock.TryLock(ctx, lockKey, []redlock.Option{redlock.WithKeyExpiration(10 * time.Second)}...)
 	// 4.2 判断锁是否获取成功
 	if err != nil {
 		// 4.3 失败，则休眠并重试

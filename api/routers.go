@@ -15,7 +15,8 @@ var (
 
 // Router 路由统一管理，返回 *mux.Router
 func Router(userController *v1.UserController, shopController *v1.ShopController,
-	voucherController *v1.VoucherController, blogController *v1.BlogController) *mux.Router {
+	voucherController *v1.VoucherController, voucherOrderController *v1.VoucherOrderController,
+	blogController *v1.BlogController) *mux.Router {
 	// 路由注册
 	router := mux.NewRouter()
 
@@ -58,11 +59,15 @@ func Router(userController *v1.UserController, shopController *v1.ShopController
 	voucherRouter.HandleFunc("/seckill", voucherController.AddSeckillVoucher).Methods("POST")
 	voucherRouter.HandleFunc("/list/{shopId}", voucherController.QueryVoucherOfShop).Methods("GET")
 
+	// 注册 voucherOrder 子路由器
+	voucherOrderRouter := router.PathPrefix("/voucher-order").Subrouter()
+	voucherOrderRouter.HandleFunc("/seckill/{id}", voucherOrderController.SeckillVoucher).Methods("POST")
+
 	// 注册 blog 子路由器
 	blogRouter := router.PathPrefix("/blog").Subrouter()
 	blogRouter.HandleFunc("/{id}", blogController.QueryBlogById).Methods("GET")
 
-	//
+	// 注册
 
 	return router
 }

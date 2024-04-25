@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type VoucherOrder struct {
 	Id         int64     `json:"id" gorm:"column:id"`
@@ -15,6 +18,34 @@ type VoucherOrder struct {
 	UpdateTime time.Time `json:"updateTime" gorm:"column:update_time;autoUpdateTime"` // 注意这里使用了column标签指定字段名
 }
 
-func (VoucherOrder) TableName() string {
+func (*VoucherOrder) TableName() string {
 	return "tb_voucher_order"
+}
+
+func (v *VoucherOrder) UnmarshalJSON(data []byte) error {
+	type Alias VoucherOrder
+	aux := &struct {
+		PayTime    string `json:"beginTime"`
+		UseTime    string `json:"useTime"`
+		RefundTime string `json:"refundTime"`
+		*Alias
+	}{Alias: (*Alias)(v)}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	// 然后使用预定义的格式解析时间字符串
+	// time.Parse() 默认解析为 UTC 时区
+	location, err := time.LoadLocation("Asia/Shanghai")
+	payTime, useTime, refundTime := v.PayTime, v.UseTime, v.RefundTime
+	if v.PayTime, err = time.ParseInLocation(time.DateTime, aux.PayTime, location); err != nil {
+		v.PayTime = payTime // 解析失败返回原始值
+	}
+	if v.UseTime, err = time.ParseInLocation(time.DateTime, aux.UseTime, location); err != nil {
+		v.UseTime = useTime
+	}
+	if v.RefundTime, err = time.ParseInLocation(time.DateTime, aux.RefundTime, location); err != nil {
+		v.UseTime = refundTime
+	}
+	return nil
 }

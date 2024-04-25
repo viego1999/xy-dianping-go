@@ -8,7 +8,7 @@ import (
 	"xy-dianping-go/internal/common"
 	"xy-dianping-go/internal/models"
 	"xy-dianping-go/internal/service"
-	"xy-dianping-go/pkg/util"
+	"xy-dianping-go/pkg/utils"
 )
 
 type ShopController struct {
@@ -69,10 +69,10 @@ func (c *ShopController) QueryShopByType(w http.ResponseWriter, r *http.Request)
 	xStr, yStr := queryParams.Get("x"), queryParams.Get("y")
 
 	// 进行数据转化
-	typeId := util.ParseInt64OrDefault(typeIdStr, -1)
-	current := util.AtoiOrDefault(currentStr, 1)
-	x := util.ParseFloatOrDefault(xStr, -1.0)
-	y := util.ParseFloatOrDefault(yStr, -1.0)
+	typeId := utils.ParseInt64OrDefault(typeIdStr, -1)
+	current := utils.AtoiOrDefault(currentStr, 1)
+	x := utils.ParseFloatOrDefault(xStr, -1.0)
+	y := utils.ParseFloatOrDefault(yStr, -1.0)
 
 	common.SendResponse(w, c.shopService.QueryShopByType(r.Context(), typeId, current, x, y))
 }
@@ -83,7 +83,7 @@ func (c *ShopController) QueryShopByName(w http.ResponseWriter, r *http.Request)
 
 	// 获取表单值
 	name, currentStr := queryParams.Get("name"), queryParams.Get("current")
-	current := util.AtoiOrDefault(currentStr, 1)
+	current := utils.AtoiOrDefault(currentStr, 1)
 
 	common.SendResponse(w, c.shopService.QueryShopByName(name, current))
 }

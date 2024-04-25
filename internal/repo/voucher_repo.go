@@ -8,6 +8,8 @@ import (
 type VoucherRepository interface {
 	CreateVoucher(voucher *models.Voucher) error
 	QueryVoucherByShopId(shopId int64) ([]models.Voucher, error)
+	// ExecuteTransaction 开启事务操作，返回结果为 nil 时，提交并执行事务，否则进行回滚
+	ExecuteTransaction(fn func(txRepo VoucherRepository) error) error
 }
 
 type VoucherRepositoryImpl struct {
@@ -30,4 +32,11 @@ func (r *VoucherRepositoryImpl) QueryVoucherByShopId(shopId int64) ([]models.Vou
 	}
 
 	return vouchers, err
+}
+
+func (r *VoucherRepositoryImpl) ExecuteTransaction(fn func(txRepo VoucherRepository) error) error {
+	return r.Db.Transaction(func(tx *gorm.DB) error {
+		txVoucherRepo := &VoucherRepositoryImpl{tx}
+		return fn(txVoucherRepo)
+	})
 }

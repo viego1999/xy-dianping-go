@@ -15,7 +15,7 @@ import (
 	"xy-dianping-go/internal/dto"
 	"xy-dianping-go/internal/models"
 	"xy-dianping-go/internal/repo"
-	"xy-dianping-go/pkg/util"
+	"xy-dianping-go/pkg/utils"
 )
 
 type UserService interface {
@@ -51,13 +51,13 @@ func (s *UserServiceImpl) GetUserById(id int64) *dto.Result {
 
 func (s *UserServiceImpl) SendCode(ctx context.Context, phone string) *dto.Result {
 	// 1.校验手机号
-	if util.IsPhoneInvalid(phone) {
+	if utils.IsPhoneInvalid(phone) {
 		// 2.手机号格式错误
 		return common.Fail("手机号格式错误")
 	}
 
 	// 3.符合，生成验证码
-	code := util.RandomNumbers(6)
+	code := utils.RandomNumbers(6)
 	// 4.保存验证码到 redis
 	s.redisClient.Set(ctx, constants.LOGIN_CODE_KEY+phone, code, time.Minute*constants.LOGIN_CODE_TTL)
 	// 5.发送短信验证码
@@ -69,7 +69,7 @@ func (s *UserServiceImpl) SendCode(ctx context.Context, phone string) *dto.Resul
 func (s *UserServiceImpl) Login(ctx context.Context, loginForm *dto.LoginFormDTO) *dto.Result {
 	// 1.校验手机号
 	phone := loginForm.Phone
-	if util.IsPhoneInvalid(phone) {
+	if utils.IsPhoneInvalid(phone) {
 		// 2.手机号格式错误
 		return common.Fail("手机号格式错误")
 	}
@@ -87,14 +87,14 @@ func (s *UserServiceImpl) Login(ctx context.Context, loginForm *dto.LoginFormDTO
 		// 6.不存在，创建用户
 		user = &models.User{
 			Phone:      phone,
-			NickName:   "user_" + util.RandomString(10),
+			NickName:   "user_" + utils.RandomString(10),
 			CreateTime: time.Now(),
 			UpdateTime: time.Now(),
 		}
 		_ = s.userRepo.CreateUser(user)
 	}
 	// 7.保存信息到 redis 中
-	userMap := util.StructToMap(&dto.UserDTO{
+	userMap := utils.StructToMap(&dto.UserDTO{
 		Id:       user.Id,
 		NickName: user.NickName,
 		Icon:     user.Icon,
@@ -117,13 +117,13 @@ func (s *UserServiceImpl) Login(ctx context.Context, loginForm *dto.LoginFormDTO
 //
 // Deprecated: 由于 http.session 中容易出现共享问题，因此使用基于 redis 的 SendCode 方法
 func (s *UserServiceImpl) SendCodeWithSession(phone string, session *sessions.Session) *dto.Result {
-	if util.IsPhoneInvalid(phone) {
+	if utils.IsPhoneInvalid(phone) {
 		// 手机号格式错误
 		return common.Fail("手机号格式错误")
 	}
 
 	// 符合，生成验证码
-	code := util.RandomNumbers(6)
+	code := utils.RandomNumbers(6)
 	// 保存到验证码 session
 	session.Values[phone+":code"] = code
 	// 发送验证码
@@ -137,7 +137,7 @@ func (s *UserServiceImpl) SendCodeWithSession(phone string, session *sessions.Se
 // Deprecated: 使用基于 redis 的 Login 方法代替
 func (s *UserServiceImpl) LoginWithSession(loginForm dto.LoginFormDTO, session *sessions.Session) *dto.Result {
 	phone := loginForm.Phone
-	if util.IsPhoneInvalid(phone) {
+	if utils.IsPhoneInvalid(phone) {
 		// 手机号格式错误
 		return common.Fail("手机号格式错误")
 	}
@@ -155,7 +155,7 @@ func (s *UserServiceImpl) LoginWithSession(loginForm dto.LoginFormDTO, session *
 		// 不存在，创建用户
 		user = &models.User{
 			Phone:      phone,
-			NickName:   "user_" + util.RandomString(10),
+			NickName:   "user_" + utils.RandomString(10),
 			CreateTime: time.Now(),
 			UpdateTime: time.Now(),
 		}

@@ -18,7 +18,7 @@ type ShopRepository interface {
 	UpdateByMap(id int64, shopMap map[string]interface{}) error
 	QueryByTypeId(typeId int64, current int) ([]models.Shop, error)
 	QueryByName(name string, current int) ([]models.Shop, error)
-	ExecuteTransaction(func(repo ShopRepository) error) error
+	ExecuteTransaction(func(txRepo ShopRepository) error) error
 }
 
 type ShopRepositoryImpl struct {
@@ -108,10 +108,10 @@ func (r *ShopRepositoryImpl) QueryByName(name string, current int) ([]models.Sho
 	return shops, nil
 }
 
-func (r *ShopRepositoryImpl) ExecuteTransaction(fn func(txShopRepo ShopRepository) error) error {
+func (r *ShopRepositoryImpl) ExecuteTransaction(fn func(txRepo ShopRepository) error) error {
 	// 开启事务
 	return r.Db.Transaction(func(tx *gorm.DB) error {
-		txRepo := &ShopRepositoryImpl{tx} // 创建事务绑定的 repository 实例
-		return fn(txRepo)                 // 执行传入的函数，如果返回错误则事务进行回滚
+		txShopRepo := &ShopRepositoryImpl{tx} // 创建事务绑定的 repository 实例
+		return fn(txShopRepo)                 // 执行传入的函数，如果返回错误则事务进行回滚
 	})
 }

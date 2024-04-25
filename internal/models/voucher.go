@@ -40,13 +40,13 @@ func (v *Voucher) UnmarshalJSON(data []byte) error {
 	// 然后使用预定义的格式解析时间字符串
 	// time.Parse() 默认解析为 UTC 时区
 	location, err := time.LoadLocation("Asia/Shanghai")
-	layout := "2006-01-02 15:04:05"
-	if v.BeginTime, err = time.ParseInLocation(layout, aux.BeginTime, location); err != nil {
-		return err
+	beginTime, endTime := v.BeginTime, v.EndTime
+	if v.BeginTime, err = time.ParseInLocation(time.DateTime, aux.BeginTime, location); err != nil {
+		v.BeginTime = beginTime
 	}
 
-	if v.EndTime, err = time.ParseInLocation(layout, aux.EndTime, location); err != nil {
-		return err
+	if v.EndTime, err = time.ParseInLocation(time.DateTime, aux.EndTime, location); err != nil {
+		v.EndTime = endTime
 	}
 	return nil
 }

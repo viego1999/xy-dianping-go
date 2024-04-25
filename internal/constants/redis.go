@@ -21,4 +21,6 @@ const (
 	ACCESS_LIMIT_USER_KEY = "access:limit:user:"
 	// SUBMIT_ORDER_TOKEN_KEY 提交订单令牌的缓存 key
 	SUBMIT_ORDER_TOKEN_KEY = "order:submit:%s:%s"
+	START_TIMESTAMP        = 1640995200
+	COUNT_BITS             = 32
 )

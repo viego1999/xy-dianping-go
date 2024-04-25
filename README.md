@@ -1400,11 +1400,24 @@ tb_seckill_voucher：优惠券的库存、开始抢购时间，结束抢购时�
 
 **新增普通卷代码：  **VoucherController
 
-```java
-@PostMapping
-public Result addVoucher(@RequestBody Voucher voucher) {
-    voucherService.save(voucher);
-    return Result.ok(voucher.getId());
+```go
+func (c *VoucherController) AddVoucher(w http.ResponseWriter, r *http.Request) {
+	var voucher models.Voucher
+	// 获取前端优惠券信息
+	if err := json.NewDecoder(r.Body).Decode(&voucher); err != nil {
+		common.SendResponseWithCode(w, common.Fail(fmt.Sprintf("Bad request: %+v", err)), http.StatusBadRequest)
+		return
+	}
+
+	common.SendResponse(w, c.voucherService.SaveVoucher(&voucher))
+}
+
+func (s *VoucherServiceImpl) SaveVoucher(voucher *models.Voucher) *dto.Result {
+	err := s.voucherRepo.CreateVoucher(voucher)
+	if err != nil {
+		panic(err)
+	}
+	return common.OkWithData(voucher.Id)
 }
 ```
 
@@ -1413,30 +1426,64 @@ public Result addVoucher(@RequestBody Voucher voucher) {
 **VoucherController**
 
 ```java
-@PostMapping("seckill")
-public Result addSeckillVoucher(@RequestBody Voucher voucher) {
-    voucherService.addSeckillVoucher(voucher);
-    return Result.ok(voucher.getId());
+func (c *VoucherController) AddSeckillVoucher(w http.ResponseWriter, r *http.Request) {
+	// 接收 JSON 数据
+	var voucher models.Voucher
+	// 获取前端优惠券信息
+	if err := json.NewDecoder(r.Body).Decode(&voucher); err != nil {
+		common.SendResponseWithCode(w, common.Fail(fmt.Sprintf("Bad request: %+v", err)), http.StatusBadRequest)
+		return
+	}
+
+	common.SendResponse(w, c.voucherService.SaveSeckillVoucher(r.Context(), &voucher))
 }
 ```
 
 **VoucherServiceImpl**
 
-```java
-@Override
-@Transactional
-public void addSeckillVoucher(Voucher voucher) {
-    // 保存优惠券
-    save(voucher);
-    // 保存秒杀信息
-    SeckillVoucher seckillVoucher = new SeckillVoucher();
-    seckillVoucher.setVoucherId(voucher.getId());
-    seckillVoucher.setStock(voucher.getStock());
-    seckillVoucher.setBeginTime(voucher.getBeginTime());
-    seckillVoucher.setEndTime(voucher.getEndTime());
-    seckillVoucherService.save(seckillVoucher);
-    // 保存秒杀库存到Redis中
-    stringRedisTemplate.opsForValue().set(SECKILL_STOCK_KEY + voucher.getId(), voucher.getStock().toString());
+```go
+func (s *VoucherServiceImpl) SaveSeckillVoucher(ctx context.Context, voucher *models.Voucher) *dto.Result {
+	// 开启事务
+	err := s.voucherRepo.ExecuteTransaction(func(txRepo repo.VoucherRepository) error {
+		// 保存优惠券
+		if err := s.voucherRepo.CreateVoucher(voucher); err != nil {
+			return err
+		}
+		// 保存秒杀信息
+		seckillVoucher := models.SeckillVoucher{
+			VoucherId: voucher.Id,
+			Stock:     voucher.Stock,
+			BeginTime: voucher.BeginTime,
+			EndTime:   voucher.EndTime,
+		}
+		// 未设定活动起止时间则自动设置为当前时间
+		now := time.Now()
+		if seckillVoucher.BeginTime.IsZero() {
+			seckillVoucher.BeginTime = now
+		}
+		if seckillVoucher.EndTime.IsZero() {
+			seckillVoucher.EndTime = now
+		}
+		// 保存秒杀优惠券
+		if err := s.seckillVoucherRepo.CreateSeckillVoucher(&seckillVoucher); err != nil {
+			return err
+		}
+		// 保存到 redis 中
+		m := map[string]interface{}{
+			"stock": strconv.Itoa(seckillVoucher.Stock),
+			"begin": strconv.FormatInt(seckillVoucher.BeginTime.UnixNano()/int64(time.Millisecond), 10),
+			"end":   strconv.FormatInt(seckillVoucher.EndTime.UnixNano()/int64(time.Millisecond), 10),
+		}
+		key := constants.SECKILL + fmt.Sprintf("%d", seckillVoucher.VoucherId)
+		if _, err := s.redisClient.HSet(ctx, key, m).Result(); err != nil {
+			return errors.New(fmt.Sprintf("Error saving to Redis:%+v.", err))
+		}
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+	return common.OkWithData(voucher.Id)
 }
 ```
 

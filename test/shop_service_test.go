@@ -14,7 +14,7 @@ import (
 	"xy-dianping-go/internal/models"
 	"xy-dianping-go/internal/repo"
 	"xy-dianping-go/internal/service"
-	"xy-dianping-go/pkg/util"
+	"xy-dianping-go/pkg/utils"
 )
 
 var (
@@ -56,7 +56,7 @@ func TestLoadShopData(t *testing.T) {
 		return
 	}
 	// 2.把店铺分组，按照 typeId 分组，id 一致的放到一个集合
-	mapOfShops := util.GroupBy(list, func(s models.Shop) int64 { return s.TypeId })
+	mapOfShops := utils.GroupBy(list, func(s models.Shop) int64 { return s.TypeId })
 	// 3.分批完成写入 Redis
 	for typeId, shops := range mapOfShops {
 		// 拼接 key

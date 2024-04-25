@@ -7,7 +7,7 @@ import (
 	"xy-dianping-go/internal/constants"
 	"xy-dianping-go/internal/db"
 	"xy-dianping-go/internal/dto"
-	"xy-dianping-go/pkg/util"
+	"xy-dianping-go/pkg/utils"
 )
 
 func RefreshTokenMiddleware(next http.Handler) http.Handler {
@@ -34,7 +34,7 @@ func RefreshTokenMiddleware(next http.Handler) http.Handler {
 		}
 		userDTO := dto.UserDTO{}
 		// 5.将查询到的数据转化为 userDTO
-		err = util.MapToStruct(util.MapValueToAny(userMap), &userDTO)
+		err = utils.MapToStruct(utils.MapValueToAny(userMap), &userDTO)
 		if err != nil {
 			panic("MapToStruct error:" + err.Error())
 		}
