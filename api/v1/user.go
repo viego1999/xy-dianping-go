@@ -111,6 +111,7 @@ func (c *UserController) Sign(w http.ResponseWriter, r *http.Request) {
 	common.SendResponse(w, c.userService.Sign(r.Context()))
 }
 
+// SignCount 签到统计，返回连续签到天数
 func (c *UserController) SignCount(w http.ResponseWriter, r *http.Request) {
 
 	common.SendResponse(w, c.userService.SignCount(r.Context()))

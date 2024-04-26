@@ -15,7 +15,7 @@ var (
 
 // Router 路由统一管理，返回 *mux.Router
 func Router(userController *v1.UserController, shopController *v1.ShopController,
-	voucherController *v1.VoucherController, voucherOrderController *v1.VoucherOrderController,
+	voucherController *v1.VoucherController, voucherOrderController *v1.VoucherOrderController, shopTypeController *v1.ShopTypeController,
 	blogController *v1.BlogController) *mux.Router {
 	// 路由注册
 	router := mux.NewRouter()
@@ -52,6 +52,10 @@ func Router(userController *v1.UserController, shopController *v1.ShopController
 	shopRouter.HandleFunc("", shopController.UpdateShop).Methods("PUT")
 	shopRouter.HandleFunc("/of/type", shopController.QueryShopByType).Methods("GET")
 	shopRouter.HandleFunc("/of/name", shopController.QueryShopByName).Methods("GET")
+
+	//注册 shopType 子路由器
+	shopTypeRouter := router.PathPrefix("/shop-type").Subrouter()
+	shopTypeRouter.HandleFunc("/list", shopTypeController.QueryTypeList).Methods("GET")
 
 	// 注册 voucher 子路由器
 	voucherRouter := router.PathPrefix("/voucher").Subrouter()
