@@ -56,7 +56,7 @@ func (s *FollowServiceImpl) Follow(ctx context.Context, followUserId int64, isFo
 	} else {
 		// 3.取关，删除
 		if err := s.followRepo.ExecuteTransaction(func(txRepo repo.FollowRepository) error {
-			rows, err := s.followRepo.DeleteFollow("user_id = ? AND follow_user_id = ?", userDTO.Id, followUserId)
+			rows, err := txRepo.DeleteFollow("user_id = ? AND follow_user_id = ?", userDTO.Id, followUserId)
 			if err != nil {
 				return errors.New(fmt.Sprintf("Follow - gorm DeleteFollow error: %+v", err))
 			}
