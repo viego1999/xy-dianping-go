@@ -14,9 +14,9 @@ var (
 )
 
 // Router 路由统一管理，返回 *mux.Router
-func Router(userController *v1.UserController, shopController *v1.ShopController,
-	voucherController *v1.VoucherController, voucherOrderController *v1.VoucherOrderController,
-	shopTypeController *v1.ShopTypeController, blogController *v1.BlogController) *mux.Router {
+func Router(userController *v1.UserController, shopController *v1.ShopController, voucherController *v1.VoucherController,
+	voucherOrderController *v1.VoucherOrderController, shopTypeController *v1.ShopTypeController, blogController *v1.BlogController,
+	followController *v1.FollowController) *mux.Router {
 	// 路由注册
 	router := mux.NewRouter()
 
@@ -78,7 +78,11 @@ func Router(userController *v1.UserController, shopController *v1.ShopController
 	blogRouter.HandleFunc("/of/user", blogController.QueryBlogByUserId).Methods("GET")
 	blogRouter.HandleFunc("/of/follow", blogController.QueryBlogOfFollow).Methods("GET")
 
-	// 注册
+	// 注册 follow 子路由器
+	followRouter := router.PathPrefix("/follow").Subrouter()
+	followRouter.HandleFunc("/{id}/{isFollow}", followController.Follow).Methods("PUT")
+	followRouter.HandleFunc("/or/not/{id}", followController.IsFollow).Methods("GET")
+	followRouter.HandleFunc("/common/{id}", followController.FollowCommons).Methods("GET")
 
 	return router
 }

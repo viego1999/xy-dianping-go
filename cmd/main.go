@@ -39,10 +39,11 @@ func main() {
 			repo.NewFollowRepository, sender.NewMqSender),
 		// 提供 Service 的实例，依赖于 Repository
 		fx.Provide(service.NewUserService, service.NewUserInfoService, service.NewShopService, service.NewShopTypeService,
-			service.NewVoucherService, service.NewVoucherOrderService, receiver.NewMqReceiver, service.NewBlogService),
+			service.NewVoucherService, service.NewVoucherOrderService, receiver.NewMqReceiver, service.NewBlogService,
+			service.NewFollowService),
 		// 提供 Controller 的实例，依赖于 Service
 		fx.Provide(v1.NewUserController, v1.NewShopController, v1.NewShopTypeController, v1.NewVoucherController,
-			v1.NewVoucherOrderController, v1.NewBlogController),
+			v1.NewVoucherOrderController, v1.NewBlogController, v1.NewFollowController),
 		// 导入路由模块
 		api.Module,
 

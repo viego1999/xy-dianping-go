@@ -9,6 +9,7 @@ import (
 
 type UserRepository interface {
 	QueryById(id int64) (*models.User, error)
+	QueryByIds(ids []int64) ([]models.User, error)
 	QueryByPhone(phone string) (*models.User, error)
 	CreateUser(user *models.User) error
 	ListByIds(sql string, ids []int64, idsStr string) ([]models.User, error)
@@ -34,6 +35,12 @@ func (r *UserRepositoryImpl) QueryById(id int64) (*models.User, error) {
 		return nil, err
 	}
 	return &user, err
+}
+
+func (r *UserRepositoryImpl) QueryByIds(ids []int64) ([]models.User, error) {
+	var users []models.User
+	err := r.Db.Where("id IN ?", ids).Find(&users).Error
+	return users, err
 }
 
 func (r *UserRepositoryImpl) QueryByPhone(phone string) (*models.User, error) {

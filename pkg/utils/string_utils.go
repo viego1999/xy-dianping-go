@@ -73,6 +73,15 @@ func ParseInt64(s string) int64 {
 	return val
 }
 
+// ParseBool 将字符串 s 转换为 bool，解析出错抛出异常
+func ParseBool(s string) bool {
+	val, err := strconv.ParseBool(s)
+	if err != nil {
+		panic(err)
+	}
+	return val
+}
+
 // ParseFloatOrDefault 将字符串 s 转换为 float64，当 s 为空字符串时返回指定的默认值 defaultVal
 func ParseFloatOrDefault(s string, defaultVal float64) float64 {
 	if s == "" {
