@@ -14,10 +14,10 @@ type Blog struct {
 	Content    string    `json:"content" gorm:"column:content"`
 	Liked      int       `json:"liked" gorm:"column:liked"`
 	Comments   int       `json:"comments" gorm:"column:comments"`
-	CreateTime time.Time `json:"createTime" gorm:"column:create_time"`
-	UpdateTime time.Time `json:"updateTime" gorm:"column:update_time"`
+	CreateTime time.Time `json:"createTime" gorm:"column:create_time;autoCreateTime"` // 注意这里使用了column标签指定字段名
+	UpdateTime time.Time `json:"updateTime" gorm:"column:update_time;autoUpdateTime"` // 注意这里使用了column标签指定字段名
 }
 
-func (Blog) TableName() string {
+func (*Blog) TableName() string {
 	return "tb_blog"
 }

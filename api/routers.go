@@ -15,8 +15,8 @@ var (
 
 // Router 路由统一管理，返回 *mux.Router
 func Router(userController *v1.UserController, shopController *v1.ShopController,
-	voucherController *v1.VoucherController, voucherOrderController *v1.VoucherOrderController, shopTypeController *v1.ShopTypeController,
-	blogController *v1.BlogController) *mux.Router {
+	voucherController *v1.VoucherController, voucherOrderController *v1.VoucherOrderController,
+	shopTypeController *v1.ShopTypeController, blogController *v1.BlogController) *mux.Router {
 	// 路由注册
 	router := mux.NewRouter()
 
@@ -69,7 +69,14 @@ func Router(userController *v1.UserController, shopController *v1.ShopController
 
 	// 注册 blog 子路由器
 	blogRouter := router.PathPrefix("/blog").Subrouter()
+	blogRouter.HandleFunc("", blogController.SaveBlog).Methods("POST")
+	blogRouter.HandleFunc("/like/{id}", blogController.LikeBlog).Methods("PUT")
+	blogRouter.HandleFunc("/of/me", blogController.QueryMyBlog).Methods("GET")
+	blogRouter.HandleFunc("/hot", blogController.QueryHotBlog).Methods("GET")
 	blogRouter.HandleFunc("/{id}", blogController.QueryBlogById).Methods("GET")
+	blogRouter.HandleFunc("/likes/{id}", blogController.QueryBlogLikes).Methods("GET")
+	blogRouter.HandleFunc("/of/user", blogController.QueryBlogByUserId).Methods("GET")
+	blogRouter.HandleFunc("/of/follow", blogController.QueryBlogOfFollow).Methods("GET")
 
 	// 注册
 

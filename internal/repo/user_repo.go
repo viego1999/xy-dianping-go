@@ -2,7 +2,6 @@ package repo
 
 import (
 	"errors"
-
 	"gorm.io/gorm"
 	"trpc.group/trpc-go/trpc-go/log"
 	"xy-dianping-go/internal/models"
@@ -12,6 +11,7 @@ type UserRepository interface {
 	QueryById(id int64) (*models.User, error)
 	QueryByPhone(phone string) (*models.User, error)
 	CreateUser(user *models.User) error
+	ListByIds(sql string, ids []int64, idsStr string) ([]models.User, error)
 }
 
 type UserRepositoryImpl struct {
@@ -52,4 +52,11 @@ func (r *UserRepositoryImpl) QueryByPhone(phone string) (*models.User, error) {
 
 func (r *UserRepositoryImpl) CreateUser(user *models.User) error {
 	return r.Db.Create(user).Error
+}
+
+// ListByIds 根据用户的 id 列表批量查询用户记录
+func (r *UserRepositoryImpl) ListByIds(sql string, ids []int64, idsStr string) ([]models.User, error) {
+	var users []models.User
+	err := r.Db.Raw(sql, ids, idsStr).Scan(&users).Error
+	return users, err
 }

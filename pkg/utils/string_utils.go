@@ -10,10 +10,12 @@ import (
 	"xy-dianping-go/internal/db"
 )
 
+// RandomNumbers 返回指定长度的随机数字字符串
 func RandomNumbers(length int) string {
 	return randomStringWithBaseString("0123456789", length)
 }
 
+// RandomString 返回指定长度的随机字符的字符串
 func RandomString(length int) string {
 	return randomStringWithBaseString("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", length)
 }
@@ -38,6 +40,7 @@ func randomStringWithBaseString(baseString string, length int) string {
 	return string(b)
 }
 
+// AtoiOrDefault 将字符串 s 转化为 int，当 s 为空字符串时返回指定的默认值 defaultVal
 func AtoiOrDefault(s string, defaultVal int) int {
 	if s == "" {
 		return defaultVal
@@ -49,6 +52,7 @@ func AtoiOrDefault(s string, defaultVal int) int {
 	return val
 }
 
+// ParseInt64OrDefault 将字符串 s 转化为 int64，当 s 为空字符串时返回指定的默认值 defaultVal
 func ParseInt64OrDefault(s string, defaultVal int64) int64 {
 	if s == "" {
 		return defaultVal
@@ -60,6 +64,16 @@ func ParseInt64OrDefault(s string, defaultVal int64) int64 {
 	return val
 }
 
+// ParseInt64 将字符串 s 转换为 int64，解析错误抛出异常
+func ParseInt64(s string) int64 {
+	val, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return val
+}
+
+// ParseFloatOrDefault 将字符串 s 转换为 float64，当 s 为空字符串时返回指定的默认值 defaultVal
 func ParseFloatOrDefault(s string, defaultVal float64) float64 {
 	if s == "" {
 		return defaultVal
@@ -71,6 +85,7 @@ func ParseFloatOrDefault(s string, defaultVal float64) float64 {
 	return val
 }
 
+// NextId 生成 int64 类型的 id，专用于订单号生成
 func NextId(ctx context.Context, keyPrefix string) int64 {
 	// 1.生成时间戳
 	now := time.Now().UTC()

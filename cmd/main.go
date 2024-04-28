@@ -36,7 +36,7 @@ func main() {
 		// 提供 Repository 的实例，依赖于 *gorm.DB
 		fx.Provide(repo.NewUserRepository, repo.NewUserInfoRepository, repo.NewShopRepository, repo.NewShopTypeRepository,
 			repo.NewVoucherRepository, repo.NewSeckillVoucherRepository, repo.NewVoucherOrderRepository, repo.NewBlogRepository,
-			sender.NewMqSender),
+			repo.NewFollowRepository, sender.NewMqSender),
 		// 提供 Service 的实例，依赖于 Repository
 		fx.Provide(service.NewUserService, service.NewUserInfoService, service.NewShopService, service.NewShopTypeService,
 			service.NewVoucherService, service.NewVoucherOrderService, receiver.NewMqReceiver, service.NewBlogService),

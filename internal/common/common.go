@@ -56,6 +56,7 @@ func FailWithCode(errorMsg string, code int64) *dto.Result {
 	}
 }
 
+// SendResponse 发送响应数据
 func SendResponse(w http.ResponseWriter, result *dto.Result) {
 	// 设置 Content-Type 头信息，表明返回的内容类型为 JSON
 	w.Header().Set("Content-Type", "application/json")

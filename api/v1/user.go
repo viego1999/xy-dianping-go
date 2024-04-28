@@ -47,8 +47,7 @@ func (c *UserController) SendCode(w http.ResponseWriter, r *http.Request) {
 func (c *UserController) Login(w http.ResponseWriter, r *http.Request) {
 	var loginForm dto.LoginFormDTO
 	// 获取前端登录请求信息
-	err := json.NewDecoder(r.Body).Decode(&loginForm)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&loginForm); err != nil {
 		common.SendResponseWithCode(w, common.Fail("Bad request"), http.StatusBadRequest)
 		return
 	}
