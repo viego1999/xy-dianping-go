@@ -155,7 +155,7 @@ func (s *UserServiceImpl) LoginWithSession(loginForm dto.LoginFormDTO, session *
 		// 不存在，创建用户
 		user = &models.User{
 			Phone:      phone,
-			NickName:   "user_" + utils.RandomString(10),
+			NickName:   constants.USER_NICK_NAME_PREFIX + utils.RandomString(10),
 			CreateTime: time.Now(),
 			UpdateTime: time.Now(),
 		}
