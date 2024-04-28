@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -111,4 +112,22 @@ func NextId(ctx context.Context, keyPrefix string) int64 {
 
 	// 3.拼接并返回
 	return int64((uint64(timestamp) << constants.COUNT_BITS) | uint64(count))
+}
+
+func GenerateUUID() string {
+	uuid := make([]byte, 16)
+	_, err := rand.Read(uuid)
+	if err != nil {
+		panic(err)
+	}
+	return hex.EncodeToString(uuid)
+}
+
+// HashCode simulates the Java String.hashCode() method.
+func HashCode(s string) int {
+	var hash int32
+	for _, c := range s {
+		hash = 31*hash + int32(c)
+	}
+	return int(hash)
 }

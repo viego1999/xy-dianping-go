@@ -16,7 +16,7 @@ var (
 // Router 路由统一管理，返回 *mux.Router
 func Router(userController *v1.UserController, shopController *v1.ShopController, voucherController *v1.VoucherController,
 	voucherOrderController *v1.VoucherOrderController, shopTypeController *v1.ShopTypeController, blogController *v1.BlogController,
-	followController *v1.FollowController) *mux.Router {
+	followController *v1.FollowController, uploadController *v1.UploadController) *mux.Router {
 	// 路由注册
 	router := mux.NewRouter()
 
@@ -83,6 +83,11 @@ func Router(userController *v1.UserController, shopController *v1.ShopController
 	followRouter.HandleFunc("/{id}/{isFollow}", followController.Follow).Methods("PUT")
 	followRouter.HandleFunc("/or/not/{id}", followController.IsFollow).Methods("GET")
 	followRouter.HandleFunc("/common/{id}", followController.FollowCommons).Methods("GET")
+
+	// 注册 upload 子路由器
+	uploadRouter := router.PathPrefix("/upload").Subrouter()
+	uploadRouter.HandleFunc("/blog", uploadController.UploadImage).Methods("POST")
+	uploadRouter.HandleFunc("/blog/delete", uploadController.DeleteBlogImg).Methods("GET")
 
 	return router
 }
